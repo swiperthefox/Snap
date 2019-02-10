@@ -5357,10 +5357,10 @@ CursorMorph.prototype.init = function (aStringOrTextMorph) {
         this.target.setAlignmentToLeft();
     }
     this.gotoSlot(this.slot);
-    this.initializeTextarea(this.target.fontSize);
+    this.initializeTextarea();
 };
 
-CursorMorph.prototype.initializeTextarea = function (fontSize) {
+CursorMorph.prototype.initializeTextarea = function () {
     var myself = this;
 
     this.textarea = document.createElement('textarea');
@@ -5368,11 +5368,13 @@ CursorMorph.prototype.initializeTextarea = function (fontSize) {
     this.textarea.style.position = 'absolute';
     this.textarea.wrap = "off";
     this.textarea.style.overflow = "hidden";
-    this.textarea.style.fontSize = fontSize + 'px';
+    this.textarea.style.fontSize = this.target.fontSize + 'px';
     this.textarea.autofocus = true;
     this.textarea.value = this.target.text;
     document.body.appendChild(this.textarea);
     this.updateTextAreaPosition();
+    this.syncTextareaSelectionWith(this.target);
+
 
     /* The following keyboard events causes special actions in Snap, so we
     don't want the textarea to handle it:
@@ -5416,7 +5418,7 @@ CursorMorph.prototype.initializeTextarea = function (fontSize) {
         }
     });
 
-    // For other keyboard events, let the textarea element handle other key 
+    // For other keyboard events, first let the textarea element handle the
     // events, then we take its state and update the target morph and cursor
     // morph accordingly.
     this.textarea.addEventListener('keyup', function (event) {
@@ -5496,7 +5498,9 @@ CursorMorph.prototype.syncTextareaSelectionWith = function (targetMorph) {
     var start = targetMorph.startMark;
     var end = targetMorph.endMark;
 
-    if (start <= end) {
+    if (start === end) {
+        this.textarea.setSelectionRange(this.slot, this.slot, 'none');
+    } else if (start < end) {
         this.textarea.setSelectionRange(start, end, 'forward');
     } else {
         this.textarea.setSelectionRange(end, start, 'backward');
