@@ -1,15 +1,50 @@
-Morph.prototype.add = function (aMorph) {
-  var owner = aMorph.parent;
-  if (owner !== null) {
-      owner.removeChild(aMorph);
-  }
-  if (isNil(aMorph.morphId)) {
-    var world = this.root();
-    aMorph.morphId = world.nextMorphId();
-  }
-  this.addChild(aMorph);
+Node.prototype.init = function (parent, childrenArray) {
+    this.parent = parent || null;
+    this.children = childrenArray || [];
+    this.morphId = null;
 };
 
+// Node accessing:
+
+Node.prototype.addChild = function (aNode) {
+    if (aNode.morphId) {
+        console.log("Alert! morphs are added to different place.")
+    } else {
+        worldMap.saveMorph(aNode);
+    }
+    this.children.push(aNode);
+    aNode.parent = this;
+};
+
+Node.prototype.addChildFirst = function (aNode) {
+    if (aNode.morphId) {
+        console.log("Alert! morphs are added to different place.")
+    } else {
+        worldMap.saveMorph(aNode);
+    }
+    this.children.splice(0, null, aNode);
+    aNode.parent = this;
+};
+
+Node.prototype.removeChild = function (aNode) {
+    var idx = this.children.indexOf(aNode);
+    if (idx !== -1) {
+        this.children.splice(idx, 1);
+        worldMap.removeMorph(aNode);
+    }
+};
+
+Morph.prototype.copy = function () {
+    var c = copy(this);
+    c.parent = null;
+    c.children = [];
+    c.bounds = this.bounds.copy();
+    c.morphId = null;
+    return c;
+};
+
+// WordMorph is special in that it will never be a child of other
+// Morphs, so we will register every WorldMorph instance.
 WorldMorph.prototype.init = function (aCanvas, fillPage) {
     WorldMorph.uber.init.call(this);
     this.color = new Color(205, 205, 205); // (130, 130, 130)
@@ -41,15 +76,10 @@ WorldMorph.prototype.init = function (aCanvas, fillPage) {
     this.activeMenu = null;
     this.activeHandle = null;
     this.virtualKeyboard = null;
-    
-    this.morphId = 0;
+    worldMap.saveMorph(this);
     this.initEventListeners();
 };
 
-WorldMorph.prototype.nextMorphId = function () {
-  this.morphId++;
-  return this.morphId;
-}
 WorldMorph.prototype.initEventListeners = function () {
   var canvas = this.worldCanvas, myself = this;
 
